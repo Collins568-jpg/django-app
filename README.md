@@ -136,7 +136,7 @@ PAYSTACK_SECRET_KEY=your-paystack-secret-key
 ### 5. Database Setup
 ```bash
 # Create MySQL database
-mysql -u root -p
+mysql -u root -p #only when you have installed the terminal version of mysql
 CREATE DATABASE jumia_clone;
 exit;
 
