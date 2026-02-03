@@ -1,0 +1,580 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart - Jumia Clone{% endblock %}
+
+{% block content %}
+<div class="container cart-page">
+    <h1 class="page-title">Shopping Cart</h1>
+
+    {% if cart.items.all %}
+    <div class="cart-layout">
+        <!-- Cart Items -->
+        <div class="cart-items-section">
+            <div class="cart-header">
+                <h2>Cart Items ({{ cart.total_items }})</h2>
+            </div>
+
+            {% for item in cart.items.all %}
+            <div class="cart-item">
+                <div class="item-image">
+                    <a href="{% url 'products:product_detail' item.product.slug %}">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                        {% else %}
+                            <img src="{% static 'images/placeholder-product.png' %}" alt="{{ item.product.name }}">
+                        {% endif %}
+                    </a>
+                </div>
+
+                <div class="item-details">
+                    <h3 class="item-name">
+                        <a href="{% url 'products:product_detail' item.product.slug %}">
+                            {{ item.product.name }}
+                        </a>
+                    </h3>
+                    <p class="item-category">Category: {{ item.product.category.name }}</p>
+                    
+                    {% if item.product.stock < 5 %}
+                    <p class="stock-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Only {{ item.product.stock }} left in stock!
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="item-price">
+                    <span class="price">₦{{ item.product.final_price }}</span>
+                </div>
+
+                <div class="item-quantity">
+                    <form method="post" action="{% url 'cart:update_cart' item.id %}" class="quantity-form">
+                        {% csrf_token %}
+                        <div class="quantity-controls">
+                            <button type="button" class="qty-btn" onclick="updateQuantity(this, -1, {{ item.product.stock }})">-</button>
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" class="qty-input" readonly>
+                            <button type="button" class="qty-btn" onclick="updateQuantity(this, 1, {{ item.product.stock }})">+</button>
+                        </div>
+                        <button type="submit" class="btn-update">Update</button>
+                    </form>
+                </div>
+
+                <div class="item-subtotal">
+                    <span class="subtotal">₦{{ item.subtotal }}</span>
+                </div>
+
+                <div class="item-remove">
+                    <form method="post" action="{% url 'cart:remove_from_cart' item.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-remove" title="Remove from cart">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="cart-actions">
+                <a href="{% url 'products:product_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Continue Shopping
+                </a>
+            </div>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary">
+            <h3>Order Summary</h3>
+            
+            <div class="summary-row">
+                <span>Subtotal ({{ cart.total_items }} items)</span>
+                <span>₦{{ cart.total_price }}</span>
+            </div>
+
+            <div class="summary-row">
+                <span>Delivery Fee</span>
+                <span>₦0.00</span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-row total">
+                <span>Total</span>
+                <span>₦{{ cart.total_price }}</span>
+            </div>
+
+            <button class="btn btn-checkout">
+                Proceed to Checkout
+            </button>
+
+            <div class="payment-methods">
+                <p>We Accept:</p>
+                <div class="payment-icons">
+                    <i class="fab fa-cc-visa"></i>
+                    <i class="fab fa-cc-mastercard"></i>
+                    <i class="fab fa-cc-paypal"></i>
+                </div>
+            </div>
+
+            <div class="secure-checkout">
+                <i class="fas fa-lock"></i>
+                <span>Secure Checkout</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promo Code Section -->
+    <div class="promo-section">
+        <h3>Have a promo code?</h3>
+        <form class="promo-form">
+            <input type="text" placeholder="Enter promo code" class="promo-input">
+            <button type="submit" class="btn btn-apply">Apply</button>
+        </form>
+    </div>
+
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="empty-cart">
+        <div class="empty-cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <h2>Your cart is empty</h2>
+        <p>Looks like you haven't added anything to your cart yet</p>
+        <a href="{% url 'products:product_list' %}" class="btn btn-primary">
+            Start Shopping
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function updateQuantity(button, change, maxStock) {
+        const form = button.closest('.quantity-form');
+        const input = form.querySelector('.qty-input');
+        let currentValue = parseInt(input.value);
+        let newValue = currentValue + change;
+        
+        if (newValue >= 1 && newValue <= maxStock) {
+            input.value = newValue;
+        }
+    }
+</script>
+
+<style>
+    .cart-page {
+        padding: 40px 20px;
+        min-height: 70vh;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 30px;
+    }
+
+    /* Cart Layout */
+    .cart-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    /* Cart Items Section */
+    .cart-items-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .cart-header {
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f8f9fa;
+        margin-bottom: 20px;
+    }
+
+    .cart-header h2 {
+        color: #333;
+    }
+
+    /* Cart Item */
+    .cart-item {
+        display: grid;
+        grid-template-columns: 100px 1fr 120px 150px 120px 50px;
+        gap: 20px;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid #f8f9fa;
+        transition: background-color 0.3s;
+    }
+
+    .cart-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .item-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #eee;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .item-image a {
+        display: block;
+    }
+
+    .item-details h3 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+
+    .item-details a {
+        color: #333;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .item-details a:hover {
+        color: #ff6b35;
+    }
+
+    .item-category {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .stock-warning {
+        color: #ffc107;
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+
+    .item-price .price {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #ff6b35;
+    }
+
+    /* Quantity Controls */
+    .quantity-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .quantity-controls {
+        display: flex;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .qty-btn {
+        width: 35px;
+        height: 35px;
+        background: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: background-color 0.3s;
+    }
+
+    .qty-btn:hover {
+        background-color: #f8f9fa;
+    }
+
+    .qty-input {
+        width: 50px;
+        text-align: center;
+        border: none;
+        border-left: 1px solid #ddd;
+        border-right: 1px solid #ddd;
+        font-weight: bold;
+    }
+
+    .btn-update {
+        padding: 5px 10px;
+        background-color: #ff6b35;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background-color 0.3s;
+    }
+
+    .btn-update:hover {
+        background-color: #e55a2b;
+    }
+
+    .item-subtotal .subtotal {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .btn-remove {
+        background: none;
+        border: none;
+        color: #dc3545;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .btn-remove:hover {
+        color: #c82333;
+    }
+
+    /* Cart Actions */
+    .cart-actions {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #f8f9fa;
+    }
+
+    /* Cart Summary */
+    .cart-summary {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        height: fit-content;
+        position: sticky;
+        top: 120px;
+    }
+
+    .cart-summary h3 {
+        margin-bottom: 20px;
+        color: #333;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        color: #666;
+    }
+
+    .summary-divider {
+        height: 1px;
+        background-color: #e9ecef;
+        margin: 15px 0;
+    }
+
+    .summary-row.total {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #333;
+        padding-top: 15px;
+    }
+
+    .btn-checkout {
+        width: 100%;
+        padding: 15px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-checkout:hover {
+        background-color: #218838;
+    }
+
+    .payment-methods {
+        margin-top: 25px;
+        text-align: center;
+    }
+
+    .payment-methods p {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .payment-icons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        font-size: 2rem;
+        color: #666;
+    }
+
+    .secure-checkout {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        color: #28a745;
+    }
+
+    /* Promo Section */
+    .promo-section {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 500px;
+    }
+
+    .promo-section h3 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .promo-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .promo-input {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    .btn-apply {
+        padding: 12px 25px;
+        background-color: #ff6b35;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    .btn-apply:hover {
+        background-color: #e55a2b;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background-color: #ff6b35;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #e55a2b;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    /* Empty Cart */
+    .empty-cart {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .empty-cart-icon {
+        font-size: 5rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+
+    .empty-cart h2 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .empty-cart p {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .cart-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .cart-summary {
+            position: static;
+        }
+
+        .cart-item {
+            grid-template-columns: 80px 1fr;
+            gap: 15px;
+        }
+
+        .item-price,
+        .item-quantity,
+        .item-subtotal,
+        .item-remove {
+            grid-column: 2;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .cart-item {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+
+        .item-image {
+            margin: 0 auto;
+        }
+
+        .item-price,
+        .item-quantity,
+        .item-subtotal,
+        .item-remove {
+            grid-column: 1;
+        }
+
+        .quantity-form {
+            align-items: center;
+        }
+
+        .promo-form {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}

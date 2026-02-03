@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Jumia Clone{% endblock %}
+
+{% block content %}
+<div class="container profile-container">
+    <div class="profile-header">
+        <h1>My Account</h1>
+    </div>
+
+    <div class="profile-content">
+        <!-- Sidebar -->
+        <div class="profile-sidebar">
+            <div class="profile-picture">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <h3>{{ user.username }}</h3>
+            <p>{{ user.email }}</p>
+
+            <div class="profile-menu">
+                <a href="#account-info" class="menu-item active">
+                    <i class="fas fa-user"></i> Account Information
+                </a>
+                <a href="#orders" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i> My Orders
+                </a>
+                <a href="#address" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i> Address Book
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="profile-main">
+            <div class="profile-section" id="account-info">
+                <h2>Account Information</h2>
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">Username:</span>
+                        <span class="info-value">{{ user.username }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ user.email }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Phone:</span>
+                        <span class="info-value">{{ user.phone_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Member Since:</span>
+                        <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+                    </div>
+                    <button class="btn btn-primary">Edit Profile</button>
+                </div>
+            </div>
+
+            <div class="profile-section" id="address">
+                <h2>Delivery Address</h2>
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">Address:</span>
+                        <span class="info-value">{{ user.address|default:"Not provided" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">City:</span>
+                        <span class="info-value">{{ user.city|default:"Not provided" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">State:</span>
+                        <span class="info-value">{{ user.state|default:"Not provided" }}</span>
+                    </div>
+                    <button class="btn btn-primary">Update Address</button>
+                </div>
+            </div>
+
+            <div class="profile-section" id="orders">
+                <h2>Recent Orders</h2>
+                <div class="orders-list">
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-bag"></i>
+                        <p>You haven't placed any orders yet</p>
+                        <a href="{% url 'products:product_list' %}" class="btn btn-primary">Start Shopping</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-container {
+        padding: 40px 20px;
+    }
+
+    .profile-header {
+        margin-bottom: 30px;
+    }
+
+    .profile-header h1 {
+        color: #333;
+    }
+
+    .profile-content {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 30px;
+    }
+
+    /* Sidebar */
+    .profile-sidebar {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        height: fit-content;
+    }
+
+    .profile-picture {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .profile-picture img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+    }
+
+    .profile-sidebar h3 {
+        text-align: center;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .profile-sidebar > p {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+    }
+
+    .profile-menu {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .menu-item {
+        padding: 12px 15px;
+        color: #333;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .menu-item:hover {
+        background-color: #f8f9fa;
+        color: #ff6b35;
+    }
+
+    .menu-item.active {
+        background-color: #ff6b35;
+        color: white;
+    }
+
+    .menu-item i {
+        width: 20px;
+    }
+
+    /* Main Content */
+    .profile-main {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .profile-section {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .profile-section h2 {
+        margin-bottom: 20px;
+        color: #333;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-row:last-of-type {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .info-value {
+        color: #333;
+    }
+
+    .btn {
+        margin-top: 20px;
+        padding: 10px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background-color: #ff6b35;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #e55a2b;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-content {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-sidebar {
+            order: 2;
+        }
+
+        .profile-main {
+            order: 1;
+        }
+    }
+</style>
+{% endblock %}

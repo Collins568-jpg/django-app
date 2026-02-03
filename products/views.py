@@ -2,6 +2,16 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from .models import Product, Category
 
+def home(request):
+    featured_products = Product.objects.filter(available=True)[:8]
+    categories = Category.objects.all()[:6]
+    
+    context = {
+        'featured_products': featured_products,
+        'categories': categories,
+    }
+    return render(request, 'home.html', context)
+
 def product_list(request):
     products = Product.objects.filter(available=True)
     categories = Category.objects.all()
@@ -40,13 +50,3 @@ def product_detail(request, slug):
         'related_products': related_products,
     }
     return render(request, 'products/product_detail.html', context)
-
-def home(request):
-    featured_products = Product.objects.filter(available=True)[:8]
-    categories = Category.objects.all()[:6]
-    
-    context = {
-        'featured_products': featured_products,
-        'categories': categories,
-    }
-    return render(request, 'home.html', context)

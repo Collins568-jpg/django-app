@@ -1,0 +1,768 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Jumia Clone{% endblock %}
+
+{% block content %}
+<div class="container product-detail-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+        <span>/</span>
+        <a href="{% url 'products:product_list' %}">Products</a>
+        <span>/</span>
+        <a href="{% url 'products:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a>
+        <span>/</span>
+        <span>{{ product.name }}</span>
+    </nav>
+
+    <!-- Product Detail Section -->
+    <div class="product-detail-grid">
+        <!-- Product Images -->
+        <div class="product-images">
+            <div class="main-image">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" id="mainImage">
+                {% else %}
+                    <img src="{% static 'images/placeholder-product.png' %}" alt="{{ product.name }}">
+                {% endif %}
+            </div>
+            
+            <!-- Thumbnail Gallery -->
+            <div class="image-gallery">
+                <div class="thumbnail active">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% endif %}
+                </div>
+                {% for image in product.images.all %}
+                <div class="thumbnail">
+                    <img src="{{ image.image.url }}" alt="{{ product.name }}">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-info-section">
+            <h1 class="product-title">{{ product.name }}</h1>
+            
+            <!-- Rating -->
+            <div class="product-rating">
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="far fa-star"></i>
+                </div>
+                <span class="rating-count">(4.0) | 128 reviews</span>
+            </div>
+
+            <!-- Price -->
+            <div class="product-price-section">
+                {% if product.discount_price %}
+                    <div class="price-main">
+                        <span class="price-current">₦{{ product.discount_price|floatformat:2 }}</span>
+                        <span class="price-original">₦{{ product.price|floatformat:2 }}</span>
+                    </div>
+                    <div class="price-discount">
+                        {% widthratio product.discount_price product.price 100 as discount %}
+                        <span class="discount-badge">SAVE {{ discount|floatformat:0 }}%</span>
+                    </div>
+                {% else %}
+                    <span class="price-current">₦{{ product.price|floatformat:2 }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Stock Status -->
+            <div class="stock-status">
+                {% if product.available and product.stock > 0 %}
+                    <span class="in-stock">
+                        <i class="fas fa-check-circle"></i> In Stock ({{ product.stock }} available)
+                    </span>
+                {% else %}
+                    <span class="out-of-stock">
+                        <i class="fas fa-times-circle"></i> Out of Stock
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Product Description -->
+            <div class="product-description">
+                <h3>Description</h3>
+                <p>{{ product.description }}</p>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div class="quantity-section">
+                <label>Quantity:</label>
+                <div class="quantity-selector">
+                    <button class="qty-btn" onclick="decreaseQty()">-</button>
+                    <input type="number" id="quantity" value="1" min="1" max="{{ product.stock }}">
+                    <button class="qty-btn" onclick="increaseQty()">+</button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="product-actions">
+                <form action="{% url 'cart:add_to_cart' product.id %}" method="post" id="addToCartForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" id="cartQuantity" value="1">
+                    <button type="submit" class="btn btn-add-cart" {% if not product.available or product.stock == 0 %}disabled{% endif %}>
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>
+                </form>
+                <button class="btn btn-buy-now">
+                    <i class="fas fa-bolt"></i> Buy Now
+                </button>
+                <button class="btn btn-wishlist">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+
+            <!-- Delivery Info -->
+            <div class="delivery-info">
+                <div class="info-item">
+                    <i class="fas fa-truck"></i>
+                    <div>
+                        <strong>Free Delivery</strong>
+                        <p>For orders above ₦10,000</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-undo"></i>
+                    <div>
+                        <strong>Return Policy</strong>
+                        <p>7 days return guarantee</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>Warranty</strong>
+                        <p>1 year manufacturer warranty</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Details Tabs -->
+    <div class="product-tabs">
+        <div class="tab-headers">
+            <button class="tab-btn active" onclick="openTab(event, 'specifications')">Specifications</button>
+            <button class="tab-btn" onclick="openTab(event, 'reviews')">Reviews (128)</button>
+        </div>
+
+        <div id="specifications" class="tab-content active">
+            <h3>Product Specifications</h3>
+            <table class="specs-table">
+                <tr>
+                    <td>Category</td>
+                    <td>{{ product.category.name }}</td>
+                </tr>
+                <tr>
+                    <td>Brand</td>
+                    <td>Premium Brand</td>
+                </tr>
+                <tr>
+                    <td>Stock</td>
+                    <td>{{ product.stock }} units</td>
+                </tr>
+                <tr>
+                    <td>SKU</td>
+                    <td>{{ product.id|stringformat:"05d" }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="reviews" class="tab-content">
+            <h3>Customer Reviews</h3>
+            <div class="reviews-summary">
+                <div class="rating-overview">
+                    <div class="rating-score">4.0</div>
+                    <div class="rating-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="far fa-star"></i>
+                    </div>
+                    <p>128 reviews</p>
+                </div>
+            </div>
+            
+            <div class="review-item">
+                <div class="review-header">
+                    <strong>John Doe</strong>
+                    <div class="review-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <p class="review-text">Great product! Exactly as described. Fast delivery too.</p>
+                <span class="review-date">2 days ago</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="related-products">
+        <h2>Related Products</h2>
+        <div class="products-grid">
+            {% for related in related_products %}
+            <div class="product-card">
+                <a href="{% url 'products:product_detail' related.slug %}">
+                    <div class="product-image">
+                        {% if related.image %}
+                            <img src="{{ related.image.url }}" alt="{{ related.name }}">
+                        {% else %}
+                            <img src="{% static 'images/placeholder-product.png' %}" alt="{{ related.name }}">
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <h3>{{ related.name }}</h3>
+                        <div class="price">₦{{ related.final_price }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Quantity controls
+    function increaseQty() {
+        const input = document.getElementById('quantity');
+        const max = parseInt(input.max);
+        if (parseInt(input.value) < max) {
+            input.value = parseInt(input.value) + 1;
+            document.getElementById('cartQuantity').value = input.value;
+        }
+    }
+
+    function decreaseQty() {
+        const input = document.getElementById('quantity');
+        if (parseInt(input.value) > 1) {
+            input.value = parseInt(input.value) - 1;
+            document.getElementById('cartQuantity').value = input.value;
+        }
+    }
+
+    // Image gallery
+    document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.addEventListener('click', function() {
+            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const img = this.querySelector('img');
+            document.getElementById('mainImage').src = img.src;
+        });
+    });
+
+    // Tabs
+    function openTab(evt, tabName) {
+        const tabContents = document.getElementsByClassName('tab-content');
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove('active');
+        }
+        const tabBtns = document.getElementsByClassName('tab-btn');
+        for (let i = 0; i < tabBtns.length; i++) {
+            tabBtns[i].classList.remove('active');
+        }
+        document.getElementById(tabName).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+</script>
+
+<style>
+    .product-detail-page {
+        padding: 30px 20px;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        margin-bottom: 30px;
+        color: #666;
+    }
+
+    .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        color: #ff6b35;
+    }
+
+    .breadcrumb span {
+        margin: 0 10px;
+    }
+
+    /* Product Grid */
+    .product-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 50px;
+        margin-bottom: 60px;
+    }
+
+    /* Images Section */
+    .product-images {
+        position: sticky;
+        top: 120px;
+        height: fit-content;
+    }
+
+    .main-image {
+        width: 100%;
+        height: 500px;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        border: 1px solid #eee;
+    }
+
+    .main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .thumbnail {
+        width: 100%;
+        height: 100px;
+        border: 2px solid #eee;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+
+    .thumbnail:hover,
+    .thumbnail.active {
+        border-color: #ff6b35;
+    }
+
+    .thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Product Info */
+    .product-title {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .stars {
+        color: #ffc107;
+    }
+
+    .rating-count {
+        color: #666;
+    }
+
+    .product-price-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .price-main {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .price-current {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #ff6b35;
+    }
+
+    .price-original {
+        font-size: 1.5rem;
+        color: #999;
+        text-decoration: line-through;
+    }
+
+    .discount-badge {
+        background-color: #28a745;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .stock-status {
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+    }
+
+    .in-stock {
+        color: #28a745;
+    }
+
+    .out-of-stock {
+        color: #dc3545;
+    }
+
+    .product-description {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-left: 4px solid #ff6b35;
+    }
+
+    .product-description h3 {
+        margin-bottom: 10px;
+    }
+
+    .product-description p {
+        color: #666;
+        line-height: 1.8;
+    }
+
+    /* Quantity Selector */
+    .quantity-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .quantity-selector {
+        display: flex;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: background-color 0.3s;
+    }
+
+    .qty-btn:hover {
+        background-color: #f8f9fa;
+    }
+
+    #quantity {
+        width: 60px;
+        height: 40px;
+        text-align: center;
+        border: none;
+        border-left: 1px solid #ddd;
+        border-right: 1px solid #ddd;
+    }
+
+    /* Action Buttons */
+    .product-actions {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .product-actions form {
+        flex: 1;
+    }
+
+    .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-add-cart {
+        flex: 1;
+        background-color: #ff6b35;
+        color: white;
+    }
+
+    .btn-add-cart:hover:not(:disabled) {
+        background-color: #e55a2b;
+    }
+
+    .btn-add-cart:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    .btn-buy-now {
+        flex: 1;
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-buy-now:hover {
+        background-color: #218838;
+    }
+
+    .btn-wishlist {
+        width: 60px;
+        background-color: white;
+        border: 2px solid #ddd;
+        color: #ff6b35;
+    }
+
+    .btn-wishlist:hover {
+        background-color: #ff6b35;
+        color: white;
+    }
+
+    /* Delivery Info */
+    .delivery-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .info-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-item i {
+        font-size: 2rem;
+        color: #ff6b35;
+    }
+
+    .info-item strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .info-item p {
+        color: #666;
+        margin: 0;
+    }
+
+    /* Tabs */
+    .product-tabs {
+        margin: 60px 0;
+    }
+
+    .tab-headers {
+        display: flex;
+        gap: 5px;
+        border-bottom: 2px solid #eee;
+        margin-bottom: 30px;
+    }
+
+    .tab-btn {
+        padding: 15px 30px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        color: #666;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        color: #ff6b35;
+        border-bottom: 3px solid #ff6b35;
+    }
+
+    .tab-content {
+        display: none;
+        padding: 30px;
+        background: white;
+        border-radius: 10px;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .specs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .specs-table tr {
+        border-bottom: 1px solid #eee;
+    }
+
+    .specs-table td {
+        padding: 15px;
+    }
+
+    .specs-table td:first-child {
+        font-weight: bold;
+        color: #666;
+        width: 200px;
+    }
+
+    /* Reviews */
+    .reviews-summary {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .rating-score {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #ff6b35;
+    }
+
+    .rating-stars {
+        color: #ffc107;
+        font-size: 1.5rem;
+        margin: 10px 0;
+    }
+
+    .review-item {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .review-stars {
+        color: #ffc107;
+    }
+
+    .review-text {
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .review-date {
+        color: #999;
+        font-size: 0.9rem;
+    }
+
+    /* Related Products */
+    .related-products {
+        margin-top: 60px;
+    }
+
+    .related-products h2 {
+        margin-bottom: 30px;
+    }
+
+    .related-products .products-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .related-products .product-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+
+    .related-products .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .related-products .product-image {
+        height: 200px;
+    }
+
+    .related-products .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .related-products .product-info {
+        padding: 15px;
+    }
+
+    .related-products .product-info h3 {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+
+    .related-products .price {
+        color: #ff6b35;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .related-products a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .product-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .product-images {
+            position: static;
+        }
+
+        .related-products .products-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .product-actions {
+            flex-direction: column;
+        }
+
+        .btn-wishlist {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
